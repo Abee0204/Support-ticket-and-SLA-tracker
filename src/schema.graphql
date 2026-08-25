@@ -1,3 +1,28 @@
 type Query {
   hello: String!
 }
+
+type User {
+  id: ID!
+  email: String!
+  role: Role!
+}
+
+enum Role {
+  USER
+  AGENT
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
+}
+
+type Query {
+  me: User
+}
+
+type Mutation {
+  register(email: String!, password: String!, role: Role!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+}

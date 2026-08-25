@@ -5,6 +5,7 @@
   "private": true,
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^3.0.0",
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.3.0",
@@ -16,6 +17,7 @@
   "dependencies": {
     "@prisma/client": "5.22.0",
     "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "graphql": "^17.0.2",
     "graphql-yoga": "^5.22.0",
     "jsonwebtoken": "^9.0.3",
