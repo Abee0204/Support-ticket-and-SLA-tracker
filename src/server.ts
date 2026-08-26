@@ -6,13 +6,16 @@ import { verifyToken } from "./modules/utils/jwt"
 const typeDefs = readFileSync("./src/schema.graphql", "utf-8")
 
 import { authResolvers } from "./modules/auth/auth.resolver"
+import { ticketResolvers } from "./modules/ticket/ticket.resolver"
 
 const resolvers = {
   Query: {
-    ...authResolvers.Query
+    ...authResolvers.Query,
+    ...ticketResolvers.Query
   },
   Mutation: {
-    ...authResolvers.Mutation
+    ...authResolvers.Mutation,
+    ...ticketResolvers.Mutation
   }
 }
 
@@ -54,6 +57,3 @@ const server = createServer(yoga)
 server.listen(4000, () => {
   console.log("Server running on http://localhost:4000/graphql")
 })
-
-
-

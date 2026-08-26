@@ -9,7 +9,9 @@
     "@types/bun": "latest",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.3.0",
-    "tsx": "^4.23.12"
+    "supertest": "^7.2.2",
+    "tsx": "^4.23.12",
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "typescript": "^7.0.2"

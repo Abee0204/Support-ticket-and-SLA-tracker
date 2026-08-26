@@ -22,7 +22,7 @@ model Ticket {
   id          String   @id @default(uuid())
   title       String
   description String
-  status      TicketStatus
+  status      TicketStatus   @default(OPEN)
   priority    Priority
 
   createdAt   DateTime @default(now())
@@ -37,7 +37,10 @@ model Ticket {
   comments    Comment[]
 
   firstResponseAt DateTime?
-  slaDeadline     DateTime
+  slaDeadline     DateTime?
+
+  @@index([status])
+  @@index([priority])
 }
 
 model Comment {

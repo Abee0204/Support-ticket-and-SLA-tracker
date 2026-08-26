@@ -1,5 +1,28 @@
 type Query {
-  hello: String!
+  hello: String
+  me: User
+  tickets(
+  status: TicketStatus
+  priority: Priority
+  page: Int
+  limit: Int
+  ): [Ticket!]!
+}
+
+
+type Mutation {
+  register(email: String!, password: String!, role: Role!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+
+  createTicket(
+    title: String!
+    description: String!
+    priority: Priority!
+  ): Ticket!
+
+  assignTicket(ticketId: ID!, agentId: ID!): Ticket!
+
+  addComment(ticketId: ID!, message: String!): Comment!
 }
 
 type User {
@@ -8,21 +31,50 @@ type User {
   role: Role!
 }
 
-enum Role {
-  USER
-  AGENT
-}
-
 type AuthPayload {
   token: String!
   user: User!
 }
 
-type Query {
-  me: User
+type Ticket {
+  id: ID!
+  title: String!
+  description: String!
+  status: TicketStatus!
+  priority: Priority!
+  createdAt: String!
+  slaDeadline: String!
+  assignedToId: String
+  slaStatus: SLAStatus!
 }
 
-type Mutation {
-  register(email: String!, password: String!, role: Role!): AuthPayload!
-  login(email: String!, password: String!): AuthPayload!
+type Comment {
+  id: ID!
+  message: String!
+  createdAt: String!
+  ticketId: String!
+  userId: String!
+}
+
+enum Role {
+  USER
+  AGENT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum SLAStatus {
+  ON_TRACK
+  AT_RISK
+  BREACHED
 }
