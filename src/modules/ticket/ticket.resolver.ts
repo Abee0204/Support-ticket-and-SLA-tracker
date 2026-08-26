@@ -2,9 +2,49 @@ import * as service from "./ticket.service";
 import { GraphQLError } from "graphql";
 import { getSLAStatus } from "../utils/sla";
 
+type GraphQLContext = {
+  user: {
+    userId: string;
+    role: "USER" | "AGENT";
+  } | null;
+};
+
+type CreateTicketArgs = {
+  title: string;
+  description: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+};
+
+type AssignTicketArgs = {
+  ticketId: string;
+  agentId: string;
+};
+
+type AddCommentArgs = {
+  ticketId: string;
+  message: string;
+};
+
+type GetTicketsArgs = {
+  status?: string;
+  priority?: string;
+  assignedToId?: string;
+  page?: number;
+  limit?: number;
+};
+
+type TicketParent = {
+  slaDeadline: string;
+  priority: "LOW" | "MEDIUM" | "HIGH";
+};
+
 export const ticketResolvers = {
   Query: {
-    tickets: async (_: any, args: any, ctx: any) => {
+    tickets: async (
+      _: unknown,
+      args: GetTicketsArgs,
+      ctx: GraphQLContext
+    ) => {
       if (!ctx.user) {
         throw new GraphQLError("Unauthorized", {
           extensions: { code: "UNAUTHORIZED" }
@@ -26,14 +66,18 @@ export const ticketResolvers = {
   },
 
   Ticket: {
-    slaStatus: (parent: any) => {
+    slaStatus: (parent: TicketParent) => {
       if (!parent.slaDeadline) return "ON_TRACK";
       return getSLAStatus(parent.slaDeadline, parent.priority);
     },
   },
 
   Mutation: {
-    createTicket: async (_: any, args: any, ctx: any) => {
+    createTicket: async (
+      _: unknown,
+      args: CreateTicketArgs,
+      ctx: GraphQLContext
+    ) => {
       if (!ctx.user) {
         throw new GraphQLError("Unauthorized", {
           extensions: { code: "UNAUTHORIZED" },
@@ -48,7 +92,11 @@ export const ticketResolvers = {
       );
     },
 
-    assignTicket: async (_: any, args: any, ctx: any) => {
+    assignTicket: async (
+      _: unknown,
+      args: AssignTicketArgs,
+      ctx: GraphQLContext
+    ) => {
       if (!ctx.user) {
         throw new GraphQLError("Unauthorized", {
           extensions: { code: "UNAUTHORIZED" }
@@ -62,7 +110,11 @@ export const ticketResolvers = {
       );
     },
 
-    addComment: async (_: any, args: any, ctx: any) => {
+    addComment: async (
+      _: unknown,
+      args: AddCommentArgs,
+      ctx: GraphQLContext
+    ) => {
       if (!ctx.user) {
         throw new GraphQLError("Unauthorized", {
           extensions: { code: "UNAUTHORIZED" }
