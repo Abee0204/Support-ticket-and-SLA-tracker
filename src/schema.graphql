@@ -2,10 +2,11 @@ type Query {
   hello: String
   me: User
   tickets(
-  status: TicketStatus
-  priority: Priority
-  page: Int
-  limit: Int
+    status: TicketStatus
+    priority: Priority
+    assignedToId: ID
+    page: Int
+    limit: Int
   ): [Ticket!]!
 }
 

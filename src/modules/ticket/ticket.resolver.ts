@@ -1,5 +1,6 @@
 import * as service from "./ticket.service";
 import { GraphQLError } from "graphql";
+import { getSLAStatus } from "../utils/sla";
 
 export const ticketResolvers = {
   Query: {
@@ -16,10 +17,18 @@ export const ticketResolvers = {
         {
           status: args.status,
           priority: args.priority,
+          assignedToId: args.assignedToId,
           page: args.page,
           limit: args.limit
         }
       );
+    },
+  },
+
+  Ticket: {
+    slaStatus: (parent: any) => {
+      if (!parent.slaDeadline) return "ON_TRACK";
+      return getSLAStatus(parent.slaDeadline, parent.priority);
     },
   },
 

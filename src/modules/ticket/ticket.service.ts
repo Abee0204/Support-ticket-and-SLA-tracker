@@ -105,21 +105,25 @@ export const getTickets = async (
   filters: {
     status?: string;
     priority?: string;
+    assignedToId?: string;
     page?: number;
     limit?: number;
   }
 ) => {
+  const { status, priority, assignedToId, page = 1, limit = 10 } = filters;
 
-  const { status, priority, page = 1, limit = 10 } = filters;
-
-  const where: any = {};
+  const where: any = {
+    ...(status && { status }),
+    ...(priority && { priority }),
+    ...(assignedToId && { assignedToId }),
+  };
 
   if (role !== "AGENT") {
-    where.createdById = userId;
+    where.OR = [
+      { createdById: userId },
+      { assignedToId: userId },
+    ];
   }
-
-  if (status) where.status = status;
-  if (priority) where.priority = priority;
 
   return prisma.ticket.findMany({
     where,
