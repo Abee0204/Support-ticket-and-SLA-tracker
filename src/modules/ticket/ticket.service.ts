@@ -10,6 +10,12 @@ export const createTicket = async (
   description: string,
   priority: Priority,
 ) => {
+  if (!title || !title.trim() || !description || !description.trim()) {
+    throw new GraphQLError("Invalid input", {
+      extensions: { code: "BAD_REQUEST" },
+    });
+  }
+
   const slaDeadline = calculateSLA(priority);
 
   return prisma.ticket.create({
@@ -59,6 +65,11 @@ export const addComment = async (
   userId: string,
   message: string,
 ) => {
+  if (!message || !message.trim()) {
+    throw new GraphQLError("Invalid input", {
+      extensions: { code: "BAD_REQUEST" },
+    });
+  }
 
   const ticket = await prisma.ticket.findUnique({
     where: { id: ticketId },
