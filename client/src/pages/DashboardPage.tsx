@@ -11,15 +11,20 @@ import AssignTicketModal from "../components/AssignTicketModal";
 const TICKETS_QUERY = `
   query Tickets($status: TicketStatus, $priority: Priority, $page: Int, $limit: Int) {
     tickets(status: $status, priority: $priority, page: $page, limit: $limit) {
-      id
-      title
-      description
-      status
-      priority
-      createdAt
-      slaDeadline
-      slaStatus
-      assignedToId
+      tickets {
+        id
+        title
+        description
+        status
+        priority
+        createdAt
+        slaDeadline
+        slaStatus
+        assignedToId
+      }
+      total
+      page
+      limit
     }
   }
 `;
@@ -33,6 +38,7 @@ interface DashboardPageProps {
 
 export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
@@ -55,11 +61,16 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
       if (statusFilter) variables.status = statusFilter;
       if (priorityFilter) variables.priority = priorityFilter;
 
-      const data = await fetchGraphQL<{ tickets: Ticket[] }>(
-        TICKETS_QUERY,
-        variables
-      );
-      setTickets(data.tickets);
+      const data = await fetchGraphQL<{
+        tickets: {
+          tickets: Ticket[];
+          total: number;
+          page: number;
+          limit: number;
+        };
+      }>(TICKETS_QUERY, variables);
+      setTickets(data.tickets.tickets);
+      setTotal(data.tickets.total);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch tickets");
     } finally {
@@ -154,7 +165,7 @@ export default function DashboardPage({ user, onLogout }: DashboardPageProps) {
         {!loading && tickets.length > 0 && (
           <Pagination
             page={page}
-            hasMore={tickets.length === LIMIT}
+            hasMore={page * LIMIT < total}
             onPrev={() => setPage((p) => Math.max(1, p - 1))}
             onNext={() => setPage((p) => p + 1)}
           />

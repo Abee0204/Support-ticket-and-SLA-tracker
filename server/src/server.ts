@@ -2,7 +2,8 @@ import { createServer } from "node:http"
 import { createYoga, createSchema } from "graphql-yoga"
 import { readFileSync } from "fs"
 import { verifyToken } from "./modules/utils/jwt"
-
+import dotenv from "dotenv";
+dotenv.config();
 const typeDefs = readFileSync("./src/schema.graphql", "utf-8")
 
 import { authResolvers } from "./modules/auth/auth.resolver"
@@ -16,7 +17,8 @@ const resolvers = {
   Mutation: {
     ...authResolvers.Mutation,
     ...ticketResolvers.Mutation
-  }
+  },
+  Ticket: ticketResolvers.Ticket
 }
 
 const schema = createSchema({
@@ -52,8 +54,10 @@ const yoga = createYoga({
 }
 })
 
-const server = createServer(yoga)
+export const server = createServer(yoga)
 
-server.listen(4000, () => {
-  console.log("Server running on http://localhost:4000/graphql")
-})
+if (process.env.NODE_ENV !== "test") {
+  server.listen(4000, () => {
+    console.log("Server running on http://localhost:4000/graphql")
+  })
+}

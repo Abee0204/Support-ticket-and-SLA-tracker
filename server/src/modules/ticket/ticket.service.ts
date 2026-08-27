@@ -1,5 +1,5 @@
 import { calculateSLA, getSLAStatus } from "../utils/sla";
-import { Priority, PrismaClient } from "@prisma/client";
+import { Priority, TicketStatus, Prisma, PrismaClient } from "@prisma/client";
 import { GraphQLError } from "graphql";
 
 const prisma = new PrismaClient();
@@ -123,9 +123,9 @@ export const getTickets = async (
 ) => {
   const { status, priority, assignedToId, page = 1, limit = 10 } = filters;
 
-  const where: any = {
-    ...(status && { status }),
-    ...(priority && { priority }),
+  const where: Prisma.TicketWhereInput = {
+    ...(status && { status: status as TicketStatus }),
+    ...(priority && { priority: priority as Priority }),
     ...(assignedToId && { assignedToId }),
   };
 
@@ -136,12 +136,22 @@ export const getTickets = async (
     ];
   }
 
-  return prisma.ticket.findMany({
-    where,
-    skip: (page - 1) * limit,
-    take: limit,
-    orderBy: {
-      createdAt: "desc"
-    }
-  });
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      orderBy: {
+        createdAt: "desc"
+      }
+    }),
+    prisma.ticket.count({ where })
+  ]);
+
+  return {
+    tickets,
+    total,
+    page,
+    limit
+  };
 };

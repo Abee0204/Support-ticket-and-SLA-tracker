@@ -7,7 +7,14 @@ type Query {
     assignedToId: ID
     page: Int
     limit: Int
-  ): [Ticket!]!
+  ): TicketList!
+}
+
+type TicketList {
+  tickets: [Ticket!]!
+  total: Int!
+  page: Int!
+  limit: Int!
 }
 
 

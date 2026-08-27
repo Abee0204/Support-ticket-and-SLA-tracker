@@ -71,6 +71,39 @@ export const calculateSLA = (
   return current;
 };
 
+export function calculateBusinessMinutesBetween(start: Date, end: Date): number {
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  if (startDate >= endDate) return 0;
+
+  let totalMinutes = 0;
+  let current = new Date(startDate);
+
+  while (current < endDate) {
+    const day = current.getDay();
+
+    if (day !== 0 && day !== 6) {
+      const workStart = new Date(current);
+      workStart.setHours(9, 0, 0, 0);
+
+      const workEnd = new Date(current);
+      workEnd.setHours(18, 0, 0, 0);
+
+      const effectiveStart = current > workStart ? current : workStart;
+      const effectiveEnd = endDate < workEnd ? endDate : workEnd;
+
+      if (effectiveStart < effectiveEnd) {
+        totalMinutes += (effectiveEnd.getTime() - effectiveStart.getTime()) / (1000 * 60);
+      }
+    }
+
+    current = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1, 0, 0, 0, 0);
+  }
+
+  return totalMinutes;
+}
+
 export const getSLAStatus = (
   slaDeadline: Date | string,
   priorityOrNow?: string | Date,
@@ -90,20 +123,18 @@ export const getSLAStatus = (
   const deadline = new Date(slaDeadline);
   if (isNaN(deadline.getTime())) return "ON_TRACK";
 
-  const diffMs = deadline.getTime() - currentDate.getTime();
+  const remainingMinutes = calculateBusinessMinutesBetween(currentDate, deadline);
 
-  if (diffMs <= 0) return "BREACHED";
+  if (remainingMinutes <= 0) return "BREACHED";
 
-  const remainingHours = diffMs / (1000 * 60 * 60);
+  let totalMinutes = 480;
+  if (priority === "LOW") totalMinutes = 1440;
+  else if (priority === "MEDIUM") totalMinutes = 480;
+  else if (priority === "HIGH") totalMinutes = 120;
 
-  let totalHours = 8;
-  if (priority === "LOW") totalHours = 24;
-  else if (priority === "MEDIUM") totalHours = 8;
-  else if (priority === "HIGH") totalHours = 2;
+  const threshold = totalMinutes * 0.25;
 
-  const thresholdHours = Math.max(1, totalHours * 0.25);
-
-  if (remainingHours <= thresholdHours) return "AT_RISK";
+  if (remainingMinutes <= threshold) return "AT_RISK";
 
   return "ON_TRACK";
 };
