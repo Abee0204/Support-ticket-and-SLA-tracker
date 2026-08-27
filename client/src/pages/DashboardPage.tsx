@@ -19,8 +19,23 @@ const TICKETS_QUERY = `
         priority
         createdAt
         slaDeadline
+        firstResponseAt
         slaStatus
         assignedToId
+        assignedTo {
+          id
+          email
+        }
+        comments {
+          id
+          message
+          createdAt
+          userId
+          user {
+            id
+            email
+          }
+        }
       }
       total
       page

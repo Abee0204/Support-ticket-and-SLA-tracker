@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import request from "supertest";
 import { calculateBusinessMinutesBetween, getSLAStatus } from "../modules/utils/sla";
+import { registerUser } from "../modules/auth/auth.service";
 import { server } from "../server";
 
 // 🔥 helper for random emails
@@ -11,6 +12,14 @@ let userToken: string;
 let agentToken: string;
 let agentId: string;
 let ticketId: string;
+
+describe("Password Validation Unit Tests", () => {
+  it("rejects short password", async () => {
+    await expect(registerUser("short@test.com", "123", "USER")).rejects.toThrow(
+      "Password must be at least 6 characters long"
+    );
+  });
+});
 
 describe("SLA Business Hours Unit Tests", () => {
   it("calculates working minutes on same day within working hours", () => {

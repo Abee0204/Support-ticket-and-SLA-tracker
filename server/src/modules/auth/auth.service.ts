@@ -11,6 +11,12 @@ export const registerUser = async (
   password: string,
   role: Role
 ) => {
+  if (!password || password.trim().length < 6) {
+    throw new GraphQLError("Password must be at least 6 characters long", {
+      extensions: { code: "BAD_REQUEST" }
+    });
+  }
+
   const existing = await prisma.user.findUnique({ where: { email } })
 
   if (existing) {

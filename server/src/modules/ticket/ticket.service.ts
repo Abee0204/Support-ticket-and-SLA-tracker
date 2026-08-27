@@ -51,11 +51,82 @@ export const assignTicket = async (
     });
   }
 
+  const targetAgent = await prisma.user.findUnique({
+    where: { id: agentId },
+  });
+
+  if (!targetAgent || targetAgent.role !== "AGENT") {
+    throw new GraphQLError("Invalid agent", {
+      extensions: { code: "BAD_REQUEST" },
+    });
+  }
+
+  if (ticket.assignedToId === agentId) {
+    throw new GraphQLError("Ticket is already assigned to this agent", {
+      extensions: { code: "BAD_REQUEST" },
+    });
+  }
+
   return prisma.ticket.update({
     where: { id: ticketId },
     data: {
       assignedToId: agentId,
       status: "IN_PROGRESS",
+    },
+    include: {
+      assignedTo: true,
+      comments: {
+        include: { user: true },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+  });
+};
+
+export const resolveTicket = async (
+  ticketId: string,
+  agentId: string,
+  userRole: string,
+) => {
+  if (userRole !== "AGENT") {
+    throw new GraphQLError("Only agents can resolve tickets", {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: ticketId },
+  });
+
+  if (!ticket) {
+    throw new GraphQLError("Ticket not found", {
+      extensions: { code: "NOT_FOUND" },
+    });
+  }
+
+  if (ticket.assignedToId !== agentId) {
+    throw new GraphQLError("Only the assigned agent can resolve this ticket", {
+      extensions: { code: "FORBIDDEN" },
+    });
+  }
+
+  if (ticket.status !== "IN_PROGRESS") {
+    throw new GraphQLError("Only in-progress tickets can be resolved", {
+      extensions: { code: "BAD_REQUEST" },
+    });
+  }
+
+  return prisma.ticket.update({
+    where: { id: ticketId },
+    data: {
+      status: "RESOLVED",
+    },
+    include: {
+      assignedTo: true,
+      comments: {
+        include: { user: true },
+        orderBy: { createdAt: "asc" },
+      },
     },
   });
 };
@@ -105,6 +176,9 @@ export const addComment = async (
       ticket: { connect: { id: ticketId } },
       user: { connect: { id: userId } },
     },
+    include: {
+      user: true,
+    },
   });
 
   return comment;
@@ -143,6 +217,13 @@ export const getTickets = async (
       take: limit,
       orderBy: {
         createdAt: "desc"
+      },
+      include: {
+        assignedTo: true,
+        comments: {
+          include: { user: true },
+          orderBy: { createdAt: "asc" }
+        }
       }
     }),
     prisma.ticket.count({ where })
@@ -154,4 +235,15 @@ export const getTickets = async (
     page,
     limit
   };
+};
+
+export const getAgents = async () => {
+  return prisma.user.findMany({
+    where: { role: "AGENT" },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+    },
+  });
 };

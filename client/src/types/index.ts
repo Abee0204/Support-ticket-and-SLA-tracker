@@ -20,6 +20,7 @@ export interface Comment {
   createdAt: string;
   ticketId: string;
   userId: string;
+  user?: User | null;
 }
 
 export interface Ticket {
@@ -32,6 +33,7 @@ export interface Ticket {
   slaDeadline: string;
   slaStatus: SLAStatus;
   assignedToId: string | null;
+  assignedTo?: User | null;
   firstResponseAt?: string | null;
   comments?: Comment[];
 }

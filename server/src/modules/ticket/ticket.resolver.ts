@@ -40,6 +40,16 @@ type TicketParent = {
 
 export const ticketResolvers = {
   Query: {
+    agents: async (_: unknown, __: unknown, ctx: GraphQLContext) => {
+      if (!ctx.user) {
+        throw new GraphQLError("Unauthorized", {
+          extensions: { code: "UNAUTHORIZED" }
+        });
+      }
+
+      return await service.getAgents();
+    },
+
     tickets: async (
       _: unknown,
       args: GetTicketsArgs,
@@ -106,6 +116,24 @@ export const ticketResolvers = {
       return await service.assignTicket(
         args.ticketId,
         args.agentId,
+        ctx.user.role,
+      );
+    },
+
+    resolveTicket: async (
+      _: unknown,
+      args: { ticketId: string },
+      ctx: GraphQLContext
+    ) => {
+      if (!ctx.user) {
+        throw new GraphQLError("Unauthorized", {
+          extensions: { code: "UNAUTHORIZED" }
+        });
+      }
+
+      return await service.resolveTicket(
+        args.ticketId,
+        ctx.user.userId,
         ctx.user.role,
       );
     },

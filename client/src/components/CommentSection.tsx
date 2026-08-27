@@ -10,6 +10,10 @@ const ADD_COMMENT_MUTATION = `
       createdAt
       ticketId
       userId
+      user {
+        id
+        email
+      }
     }
   }
 `;
@@ -31,7 +35,8 @@ export default function CommentSection({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    const trimmed = message.trim();
+    if (!trimmed) return;
 
     setLoading(true);
     setError("");
@@ -41,7 +46,7 @@ export default function CommentSection({
         ADD_COMMENT_MUTATION,
         {
           ticketId,
-          message,
+          message: trimmed,
         }
       );
       setMessage("");
@@ -73,10 +78,13 @@ export default function CommentSection({
         <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
           {comments.map((comment) => (
             <div key={comment.id} className="bg-gray-50 rounded-md p-3">
+              <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                <span className="font-medium text-gray-700">
+                  {comment.user?.email || "User"}
+                </span>
+                <span>{formatDate(comment.createdAt)}</span>
+              </div>
               <p className="text-sm text-gray-800">{comment.message}</p>
-              <p className="text-xs text-gray-500 mt-1">
-                {formatDate(comment.createdAt)}
-              </p>
             </div>
           ))}
         </div>
@@ -101,7 +109,7 @@ export default function CommentSection({
           disabled={loading || !message.trim()}
           className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 disabled:opacity-50"
         >
-          {loading ? "..." : "Send"}
+          {loading ? "Sending..." : "Send"}
         </button>
       </form>
     </div>

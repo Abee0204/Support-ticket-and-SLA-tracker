@@ -1,6 +1,9 @@
+scalar DateTime
+
 type Query {
   hello: String
   me: User
+  agents: [User!]!
   tickets(
     status: TicketStatus
     priority: Priority
@@ -30,6 +33,8 @@ type Mutation {
 
   assignTicket(ticketId: ID!, agentId: ID!): Ticket!
 
+  resolveTicket(ticketId: ID!): Ticket!
+
   addComment(ticketId: ID!, message: String!): Comment!
 }
 
@@ -52,7 +57,10 @@ type Ticket {
   priority: Priority!
   createdAt: String!
   slaDeadline: String!
+  firstResponseAt: DateTime
   assignedToId: String
+  assignedTo: User
+  comments: [Comment!]!
   slaStatus: SLAStatus!
 }
 
@@ -62,6 +70,7 @@ type Comment {
   createdAt: String!
   ticketId: String!
   userId: String!
+  user: User
 }
 
 enum Role {

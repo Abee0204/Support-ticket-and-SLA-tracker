@@ -1,7 +1,17 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Ticket, User, Comment } from "../types";
+import { fetchGraphQL } from "../lib/api";
 import SLABadge from "./SLABadge";
 import CommentSection from "./CommentSection";
+
+const RESOLVE_TICKET_MUTATION = `
+  mutation ResolveTicket($ticketId: ID!) {
+    resolveTicket(ticketId: $ticketId) {
+      id
+      status
+    }
+  }
+`;
 
 interface TicketCardProps {
   ticket: Ticket;
@@ -28,6 +38,18 @@ const priorityStyles: Record<string, string> = {
   HIGH: "bg-red-100 text-red-800",
 };
 
+function getTimeDiff(start: string, end: string) {
+  const startMs = isNaN(Number(start)) ? new Date(start).getTime() : Number(start);
+  const endMs = isNaN(Number(end)) ? new Date(end).getTime() : Number(end);
+  const diff = endMs - startMs;
+  const minutes = Math.max(0, Math.floor(diff / (1000 * 60)));
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+
+  if (hours > 0) return `${hours}h ${remainingMinutes}m`;
+  return `${remainingMinutes}m`;
+}
+
 export default function TicketCard({
   ticket,
   user,
@@ -36,6 +58,12 @@ export default function TicketCard({
 }: TicketCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState<Comment[]>(ticket.comments || []);
+  const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState("");
+
+  useEffect(() => {
+    setComments(ticket.comments || []);
+  }, [ticket.comments]);
 
   const handleToggle = () => {
     setExpanded(!expanded);
@@ -45,6 +73,24 @@ export default function TicketCard({
     setComments((prev) => [...prev, newComment]);
     onRefresh();
   };
+
+  const handleResolve = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setResolving(true);
+    setResolveError("");
+    try {
+      await fetchGraphQL(RESOLVE_TICKET_MUTATION, { ticketId: ticket.id });
+      onRefresh();
+    } catch (err) {
+      setResolveError(
+        err instanceof Error ? err.message : "Failed to resolve ticket"
+      );
+    } finally {
+      setResolving(false);
+    }
+  };
+
+  const assignedEmail = ticket.assignedTo?.email || ticket.assignedToId;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
@@ -99,34 +145,48 @@ export default function TicketCard({
                   : Number(ticket.slaDeadline)
               ).toLocaleString()}
             </span>
-            {ticket.firstResponseAt && (
-              <span>
-                First Response:{" "}
-                {new Date(
-                  isNaN(Number(ticket.firstResponseAt))
-                    ? ticket.firstResponseAt
-                    : Number(ticket.firstResponseAt)
-                ).toLocaleString()}
-              </span>
-            )}
-            {ticket.assignedToId && (
-              <span>Assigned To: {ticket.assignedToId}</span>
-            )}
+            <span>
+              First Response:{" "}
+              {ticket.firstResponseAt
+                ? getTimeDiff(ticket.createdAt, ticket.firstResponseAt)
+                : "No response yet"}
+            </span>
+            {assignedEmail && <span>Assigned To: {assignedEmail}</span>}
           </div>
 
-          {user.role === "AGENT" &&
-            ticket.status === "OPEN" &&
-            !ticket.assignedToId && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAssign(ticket.id);
-                }}
-                className="mt-3 px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
-              >
-                Assign to Me
-              </button>
-            )}
+          {resolveError && (
+            <div className="mt-2 p-2 bg-red-50 text-red-700 text-xs rounded-md">
+              {resolveError}
+            </div>
+          )}
+
+          <div className="mt-3 flex gap-2">
+            {user.role === "AGENT" &&
+              ticket.status === "OPEN" &&
+              !ticket.assignedToId && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAssign(ticket.id);
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
+                >
+                  Assign Ticket
+                </button>
+              )}
+
+            {user.role === "AGENT" &&
+              ticket.status === "IN_PROGRESS" &&
+              ticket.assignedToId === user.id && (
+                <button
+                  onClick={handleResolve}
+                  disabled={resolving}
+                  className="px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50"
+                >
+                  {resolving ? "Resolving..." : "Resolve Ticket"}
+                </button>
+              )}
+          </div>
 
           <CommentSection
             ticketId={ticket.id}
