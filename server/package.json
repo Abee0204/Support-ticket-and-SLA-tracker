@@ -31,5 +31,8 @@
   "scripts": {
     "dev": "tsx src/server.ts",
     "test": "vitest"
-  }
+  },
+  "engines": {
+  "node": ">=18"
+}
 }
