@@ -28,10 +28,11 @@
     "prisma": "5.22.0",
     "zod": "^4.4.3"
   },
+ 
   "scripts": {
     "dev": "tsx src/server.ts",
-    "test": "vitest",
-    "start": "bun prisma db push && bun run src/server.ts"
+    "start": "bun prisma db push && bun src/server.ts",
+    "test": "vitest"
   },
   "engines": {
   "node": ">=18"
