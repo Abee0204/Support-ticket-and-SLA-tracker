@@ -30,7 +30,8 @@
   },
   "scripts": {
     "dev": "tsx src/server.ts",
-    "test": "vitest"
+    "test": "vitest",
+    "start": "bun prisma db push && bun run server.ts"
   },
   "engines": {
   "node": ">=18"
