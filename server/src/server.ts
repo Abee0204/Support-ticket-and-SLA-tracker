@@ -3,46 +3,43 @@ import { readFileSync } from "fs";
 import dotenv from "dotenv";
 import { verifyToken } from "./modules/utils/jwt";
 
-dotenv.config();
-
-const typeDefs = readFileSync("./src/schema.graphql", "utf-8");
-
 import { authResolvers } from "./modules/auth/auth.resolver";
 import { ticketResolvers } from "./modules/ticket/ticket.resolver";
+
+dotenv.config();
+
+
+const typeDefs = readFileSync("./src/schema.graphql", "utf-8");
 
 const resolvers = {
   Query: {
     ...authResolvers.Query,
-    ...ticketResolvers.Query
+    ...ticketResolvers.Query,
   },
   Mutation: {
     ...authResolvers.Mutation,
-    ...ticketResolvers.Mutation
+    ...ticketResolvers.Mutation,
   },
-  Ticket: ticketResolvers.Ticket
+  Ticket: ticketResolvers.Ticket,
 };
 
 const schema = createSchema({
   typeDefs,
-  resolvers
+  resolvers,
 });
+
 
 const yoga = createYoga({
   schema,
   graphqlEndpoint: "/graphql",
+  maskedErrors: false, 
   context: ({ request }) => {
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) return { user: null };
 
-    const parts = authHeader.split(" ");
-    if (parts.length !== 2 || parts[0] !== "Bearer") {
-      return { user: null };
-    }
-
-    const token = parts[1];
-
-    if (!token) return { user: null }
+    const [type, token] = authHeader.split(" ");
+    if (type !== "Bearer" || !token) return { user: null };
 
     try {
       const decoded = verifyToken(token);
@@ -50,7 +47,7 @@ const yoga = createYoga({
     } catch {
       return { user: null };
     }
-  }
+  },
 });
 
 
@@ -58,14 +55,21 @@ const port = Number(process.env.PORT) || 4000;
 
 Bun.serve({
   port,
-  fetch: (req) => {
+  fetch: async (req) => {
+    const url = new URL(req.url);
+
     
-    if (new URL(req.url).pathname === "/") {
-      return new Response("Backend running 🚀");
+    if (url.pathname === "/") {
+      return new Response("OK", { status: 200 });
     }
 
-    return yoga.fetch(req);
-  }
+    try {
+      return await yoga.fetch(req); 
+    } catch (err) {
+      console.error("Server Error:", err);
+      return new Response("Internal Server Error", { status: 500 });
+    }
+  },
 });
 
-console.log(`Server running on port ${port}`);
+console.log(`🚀 Server running on port ${port}`);
