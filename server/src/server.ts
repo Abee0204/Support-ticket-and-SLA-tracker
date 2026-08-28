@@ -54,7 +54,14 @@ const yoga = createYoga({
 }
 })
 
-export const server = createServer(yoga)
+const server = createServer((req, res) => {
+  if (req.url === "/") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("Backend is running 🚀");
+  } else {
+    yoga(req, res);
+  }
+});
 
 const PORT = Number(process.env.PORT) || 4000;
 
