@@ -56,8 +56,8 @@ const yoga = createYoga({
 
 export const server = createServer(yoga)
 
-if (process.env.NODE_ENV !== "test") {
-  server.listen(4000, () => {
-    console.log("Server running on http://localhost:4000/graphql")
-  })
-}
+const PORT = Number(process.env.PORT) || 4000;
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
