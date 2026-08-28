@@ -8,6 +8,10 @@ import { ticketResolvers } from "./modules/ticket/ticket.resolver";
 
 dotenv.config();
 
+console.log("🔥 SERVER STARTING...");
+console.log("PORT:", process.env.PORT);
+console.log("DATABASE_URL:", process.env.DATABASE_URL ? "FOUND" : "MISSING");
+console.log("JWT_SECRET:", process.env.JWT_SECRET ? "FOUND" : "MISSING");
 
 const typeDefs = readFileSync("./src/schema.graphql", "utf-8");
 
@@ -56,20 +60,23 @@ const port = Number(process.env.PORT) || 4000;
 Bun.serve({
   port,
   fetch: async (req) => {
-    const url = new URL(req.url);
+  console.log("➡️ Incoming:", req.url);
 
-    
-    if (url.pathname === "/") {
-      return new Response("OK", { status: 200 });
-    }
+  const url = new URL(req.url);
 
-    try {
-      return await yoga.fetch(req); 
-    } catch (err) {
-      console.error("Server Error:", err);
-      return new Response("Internal Server Error", { status: 500 });
-    }
-  },
+  if (url.pathname === "/") {
+    return new Response("OK");
+  }
+
+  try {
+    const res = await yoga.fetch(req);
+    console.log("✅ Response sent");
+    return res;
+  } catch (err) {
+    console.error("❌ Yoga crash:", err);
+    return new Response("Internal Error", { status: 500 });
+  }
+},
 });
 
 console.log(`🚀 Server running on port ${port}`);
