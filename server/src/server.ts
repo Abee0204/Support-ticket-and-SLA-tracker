@@ -58,6 +58,6 @@ export const server = createServer(yoga)
 
 const PORT = Number(process.env.PORT) || 4000;
 
-server.listen(PORT, () => {
+server.listen(PORT,"0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
 });
